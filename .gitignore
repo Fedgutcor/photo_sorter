@@ -1,10 +1,12 @@
 __pycache__/
 *.pyc
 .venv/
-venv/
-venv_local/
+venv*/
 node_modules/
 .env
 .DS_Store
 dist/
 build/
+.ui_config.json
+*.db
+icon.icns

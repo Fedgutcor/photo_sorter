@@ -1,2 +1,13 @@
+# Dependencias base (requeridas)
 anthropic>=0.39.0
 Pillow>=10.0.0
+keyring>=25.0.0
+pillow-heif>=0.13.0
+
+# Proveedores opcionales — instala según el que uses:
+# Google AI Studio (Gemini):
+#   pip install google-generativeai
+# OpenAI (GPT-4o):
+#   pip install openai
+# Groq (Llama Vision) — usa openai como fallback, pero el SDK es más rápido:
+#   pip install groq

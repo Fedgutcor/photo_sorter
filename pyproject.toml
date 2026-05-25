@@ -1,0 +1,22 @@
+[project]
+name = "photo-sorter"
+version = "1.0.0"
+description = "Organiza tus fotos por categoría y fecha usando Claude Vision"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.39.0",
+    "Pillow>=10.0.0",
+    "keyring>=25.0",
+]
+
+[project.scripts]
+photo-sorter = "photo_sorter:main"
+photo-sorter-ui = "photo_sorter_ui:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+include = ["photo_sorter.py", "photo_sorter_ui.py", "photo_sorter_local.py"]

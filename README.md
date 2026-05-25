@@ -1,7 +1,9 @@
 # Photo Sorter
 
-Organiza fotos automáticamente en carpetas por categoría y fecha usando Claude Vision API.
-Disponible como **interfaz gráfica (UI)** o como herramienta de línea de comandos (CLI).
+Organiza fotos automáticamente en carpetas por categoría y fecha usando Vision AI.
+Soporta **Anthropic Claude**, **Google AI Studio (Gemini)**, **OpenAI (GPT-4o)** y **Groq (Llama Vision)**.
+
+Disponible como **interfaz gráfica (UI)** o **línea de comandos (CLI)**.
 
 ## Estructura de salida
 
@@ -20,113 +22,126 @@ output/
 
 ## Instalación
 
-### 1. Requisitos
+### Requisitos
 
 - Python 3.11+
-- API Key de Anthropic
+- API Key de alguno de los proveedores soportados
 
-### 2. Configurar API Key
-
-Obtén tu API key en: https://console.anthropic.com/settings/keys
+### Instalar dependencias
 
 ```bash
-# macOS/Linux - agregar a ~/.zshrc o ~/.bashrc
-export ANTHROPIC_API_KEY="sk-ant-api03-..."
-
-# Recargar
-source ~/.zshrc
+pip install anthropic Pillow keyring pillow-heif
 ```
 
-**Windows (PowerShell):**
-```powershell
-$env:ANTHROPIC_API_KEY = "sk-ant-api03-..."
-
-# O permanente:
-[Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "sk-ant-api03-...", "User")
-```
-
-### 3. Instalar dependencias con soporte para UI
+Según el proveedor que uses, instala el SDK correspondiente:
 
 ```bash
-cd photo_sorter
-# Crear entorno virtual con Python 3.14 (incluye tkinter via python-tk@3.14)
-/usr/local/bin/python3.14 -m venv venv_ui
-source venv_ui/bin/activate
-pip install anthropic Pillow
+# Google AI Studio (Gemini) — modelos gratuitos disponibles
+pip install google-generativeai
+
+# OpenAI (GPT-4o)
+pip install openai
+
+# Groq (Llama Vision) — modelo gratuito disponible
+pip install groq
 ```
 
-> Si usas Python 3.11 o 3.12, instala primero: `brew install python-tk@3.11`
+### Obtener una API Key
+
+| Proveedor | URL | Costo |
+|-----------|-----|-------|
+| Anthropic (Claude) | https://console.anthropic.com/settings/keys | ~$0.001–$0.01/img |
+| Google AI Studio | https://aistudio.google.com/app/apikey | Gratuito (cuota diaria) |
+| OpenAI | https://platform.openai.com/api-keys | ~$0.0015–$0.01/img |
+| Groq | https://console.groq.com/keys | Gratuito (cuota diaria) |
 
 ## Uso
 
-### Interfaz Gráfica (recomendado)
+### Interfaz gráfica (recomendado)
 
 ```bash
-source venv_ui/bin/activate
 python photo_sorter_ui.py
 ```
 
-La UI permite:
-- Seleccionar carpetas con el explorador de archivos
-- Ingresar / gestionar la API Key desde la propia ventana
-- Ver el progreso imagen por imagen en tiempo real
-- Analizar el costo estimado antes de procesar
-- Cancelar el proceso en cualquier momento
-- Configuración persistente entre sesiones
+1. Selecciona la carpeta de entrada y salida
+2. Elige tu proveedor de IA y pega tu API key
+3. Selecciona el modelo y formato de organización
+4. Haz clic en **Iniciar**
 
-### CLI — Básico
+La key queda guardada de forma segura en el Keychain del sistema (macOS) o Credential Manager (Windows). No se almacena en texto plano.
+
+### CLI
 
 ```bash
-python photo_sorter.py --input ~/Fotos --output ~/FotosOrganizadas
+# Con Anthropic (default)
+python photo_sorter.py --input ./fotos --output ./organizado
+
+# Con Google AI Studio
+python photo_sorter.py --input ./fotos --output ./organizado --provider google --model gemini-2.0-flash
+
+# Con Groq (gratis)
+python photo_sorter.py --input ./fotos --output ./organizado --provider groq
+
+# Con OpenAI
+python photo_sorter.py --input ./fotos --output ./organizado --provider openai --model gpt-4o-mini
 ```
 
-### Dry-run (ver qué haría sin ejecutar)
+### Dry-run (simular sin mover archivos)
 
 ```bash
-python photo_sorter.py --input ~/Fotos --output ~/FotosOrganizadas --dry-run
+python photo_sorter.py --input ./fotos --output ./organizado --dry-run
 ```
 
 ### Mover en vez de copiar
 
 ```bash
-python photo_sorter.py --input ~/Fotos --output ~/FotosOrganizadas --mode move
+python photo_sorter.py --input ./fotos --output ./organizado --mode move
 ```
 
-### Con más workers (más rápido, más costo)
-
-```bash
-python photo_sorter.py --input ~/Fotos --output ~/FotosOrganizadas --workers 4 --delay 0.05
-```
-
-### Sin subcarpetas de fecha
-
-```bash
-python photo_sorter.py --input ~/Fotos --output ~/FotosOrganizadas --date-buckets none
-```
-
-### Saltar confirmación
-
-```bash
-python photo_sorter.py --input ~/Fotos --output ~/FotosOrganizadas --yes
-```
-
-## Opciones
+## Opciones CLI
 
 | Opción | Default | Descripción |
 |--------|---------|-------------|
-| `--input`, `-i` | (requerido) | Directorio de entrada |
-| `--output`, `-o` | (requerido) | Directorio de salida |
+| `--input`, `-i` | (requerido) | Carpeta de entrada |
+| `--output`, `-o` | (requerido) | Carpeta de salida |
+| `--provider` | `anthropic` | `anthropic`, `google`, `openai`, `groq` |
+| `--model` | (por proveedor) | Modelo a usar |
 | `--mode` | `copy` | `copy` o `move` |
-| `--max-categories` | `20` | Límite de categorías |
 | `--min-confidence` | `0.35` | Confianza mínima (menor va a `otros/`) |
-| `--date-buckets` | `ym` | `ym` (YYYY-MM) o `none` |
-| `--unknown-date-name` | `unknown-date` | Carpeta para fechas desconocidas |
-| `--delay` | `0.1` | Segundos entre llamadas API |
-| `--workers` | `2` | Workers concurrentes |
-| `--dry-run` | `false` | Solo simular, no mover/copiar |
-| `--no-csv` | `false` | No generar CSV |
+| `--date-buckets` | `ym` | `ym`, `y`, `none`, `cat-y-m`, `ym-cat`, `y-cat` |
+| `--workers` | `2` | Llamadas simultáneas a la API |
+| `--delay` | `0.1` | Segundos entre llamadas |
+| `--dry-run` | `false` | Simular sin mover archivos |
+| `--recursive`, `-r` | `false` | Buscar en subcarpetas |
 | `--yes`, `-y` | `false` | Saltar confirmación |
-| `--verbose`, `-v` | `false` | Más detalles |
+
+## Modelos disponibles
+
+### Anthropic (Claude)
+| Modelo | Velocidad | Costo est. |
+|--------|-----------|------------|
+| `claude-3-haiku-20240307` | Rápido | ~$0.001/img |
+| `claude-3-5-haiku-20241022` | Medio | ~$0.003/img |
+| `claude-3-5-sonnet-20241022` | Preciso | ~$0.010/img |
+
+### Google AI Studio (Gemini)
+| Modelo | Velocidad | Costo est. |
+|--------|-----------|------------|
+| `gemini-2.0-flash` | Rápido | Gratuito |
+| `gemini-1.5-flash` | Rápido | Gratuito |
+| `gemini-1.5-pro` | Preciso | ~$0.0035/img |
+
+### OpenAI
+| Modelo | Velocidad | Costo est. |
+|--------|-----------|------------|
+| `gpt-4o-mini` | Rápido | ~$0.0015/img |
+| `gpt-4o` | Preciso | ~$0.010/img |
+
+### Groq (Llama Vision)
+| Modelo | Velocidad | Costo est. |
+|--------|-----------|------------|
+| `llama-3.2-11b-vision-preview` | Rápido | Gratuito |
+| `llama-3.2-90b-vision-preview` | Preciso | ~$0.0009/img |
 
 ## Categorías
 
@@ -137,50 +152,18 @@ python photo_sorter.py --input ~/Fotos --output ~/FotosOrganizadas --yes
 - `actividades-eventos`, `actividades-deporte`
 - `comida-bebida`
 - `construccion-obra`, `construccion-materiales`, `construccion-planos`
-- `memes`, `capturas-pantalla`
-- `arte-digital`
+- `memes`, `capturas-pantalla`, `arte-digital`
 - `otros`
 
-## Reportes
+Las categorías son editables desde la interfaz gráfica.
 
-Después de ejecutar, encontrarás en el directorio de salida:
+## Caché
 
-**report.json:**
-```json
-[
-  {
-    "filename": "foto1.jpg",
-    "category": "mascotas-perros",
-    "date_bucket": "2024-01",
-    "labels": ["perro", "mascota", "golden retriever", "parque"],
-    "confidence": 0.95,
-    "destination": "/output/mascotas-perros/2024-01/foto1.jpg",
-    "date_source": "exif",
-    "error": null,
-    "from_cache": false
-  }
-]
-```
+Las imágenes ya analizadas se guardan en `.photo_sorter_cache.db` dentro de la carpeta de salida. Ejecuciones posteriores sobre las mismas imágenes no consumen tokens de la API.
 
-**report.csv:** Mismo contenido en formato CSV.
+## Reporte
 
-## Cache
-
-El programa guarda un cache en `.photo_sorter_cache.db` para no reprocesar imágenes ya analizadas. Esto ahorra tiempo y dinero en ejecuciones posteriores.
-
-## Fechas
-
-Prioridad para obtener YYYY-MM:
-1. EXIF `DateTimeOriginal`
-2. EXIF `DateTime` / `DateTimeDigitized`
-3. Fecha de modificación del archivo (`mtime`)
-4. `unknown-date` si todo falla
-
-## Costos
-
-Estimación aproximada: ~$0.01 USD por imagen (depende del tamaño).
-
-El programa muestra una estimación antes de procesar y pide confirmación.
+Después de cada ejecución se generan `report.json` y `report.csv` en la carpeta de salida con el detalle de cada imagen procesada.
 
 ## Empaquetar como ejecutable
 
@@ -188,46 +171,31 @@ El programa muestra una estimación antes de procesar y pide confirmación.
 
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --name photo_sorter photo_sorter.py
+pyinstaller PhotoSorter.spec
+# Resultado: dist/Photo Sorter.app
 ```
-
-El ejecutable estará en `dist/photo_sorter`.
 
 ### Windows
 
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --name photo_sorter.exe photo_sorter.py
+# Convierte el ícono primero: magick icon.icns icon.ico
+pyinstaller PhotoSorter_Windows.spec
+# Resultado: dist/PhotoSorter.exe
 ```
-
-El ejecutable estará en `dist\photo_sorter.exe`.
-
-### Uso del ejecutable
-
-```bash
-./dist/photo_sorter --input ~/Fotos --output ~/Organizado
-```
-
-Nota: Aún necesitas configurar `ANTHROPIC_API_KEY` como variable de entorno.
 
 ## Solución de problemas
 
-### "ANTHROPIC_API_KEY no está configurada"
-Verifica que exportaste la variable correctamente:
+**"No se encontraron imágenes"** — verifica que la carpeta contiene `.jpg`, `.png`, `.webp`, `.heic` u otros formatos soportados.
+
+**Rate limit** — reduce workers o aumenta el delay:
 ```bash
-echo $ANTHROPIC_API_KEY
+--workers 1 --delay 1.0
 ```
 
-### "Pillow no instalado"
+**Imágenes HEIC/HEIF** — requiere `pillow-heif`:
 ```bash
-pip install Pillow
+pip install pillow-heif
 ```
 
-### Rate limits
-Aumenta el delay o reduce workers:
-```bash
---delay 1.0 --workers 1
-```
-
-### Imágenes muy grandes
-El programa redimensiona automáticamente imágenes que excedan los límites de Claude (20MB o 8000px).
+**Error de importación del proveedor** — instala el SDK correspondiente (ver sección Instalación).

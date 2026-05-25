@@ -297,7 +297,12 @@ def undo_from_report(report_path: str, skip_confirm: bool = False):
         logger.warning("No hay archivos para revertir")
         return
 
-    existing = [r for r in to_revert if Path(r["destination"]).exists()]
+    existing = [
+        r for r in to_revert
+        if Path(r["destination"]).exists()
+        and not Path(r["destination"]).is_symlink()
+        and Path(r["source_path"]).parent.exists()
+    ]
 
     logger.info("")
     logger.info("=== UNDO ===")
