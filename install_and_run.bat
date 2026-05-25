@@ -41,7 +41,7 @@ echo   Instalando dependencias...
 "%PIP%" install --quiet anthropic "Pillow>=10" "keyring>=25" pillow-heif
 
 :: SDKs opcionales
-for %%S in (google-generativeai openai groq) do (
+for %%S in (google-genai openai groq) do (
     "%PIP%" install --quiet %%S 2>nul
 )
 

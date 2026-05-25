@@ -6,7 +6,7 @@ pillow-heif>=0.13.0
 
 # Proveedores opcionales — instala según el que uses:
 # Google AI Studio (Gemini):
-#   pip install google-generativeai
+#   pip install google-genai
 # OpenAI (GPT-4o):
 #   pip install openai
 # Groq (Llama Vision) — usa openai como fallback, pero el SDK es más rápido:

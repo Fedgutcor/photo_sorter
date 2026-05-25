@@ -37,7 +37,7 @@ Según el proveedor que uses, instala el SDK correspondiente:
 
 ```bash
 # Google AI Studio (Gemini) — modelos gratuitos disponibles
-pip install google-generativeai
+pip install google-genai
 
 # OpenAI (GPT-4o)
 pip install openai

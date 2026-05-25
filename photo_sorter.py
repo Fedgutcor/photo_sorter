@@ -455,16 +455,22 @@ def _call_anthropic(api_key: str, model: str, image_b64: str,
 def _call_google(api_key: str, model: str, image_b64: str,
                  media_type: str, prompt: str) -> str:
     try:
-        import google.generativeai as genai
+        from google import genai
+        from google.genai import types
     except ImportError:
         raise RuntimeError(
-            "google-generativeai no está instalado. "
-            "Ejecuta: pip install google-generativeai"
+            "google-genai no está instalado. "
+            "Ejecuta: pip install google-genai"
         )
-    genai.configure(api_key=api_key)
-    gmodel = genai.GenerativeModel(model)
-    image_part = {"inline_data": {"mime_type": media_type, "data": image_b64}}
-    response = gmodel.generate_content([prompt, image_part])
+    client = genai.Client(api_key=api_key)
+    image_bytes = base64.b64decode(image_b64)
+    response = client.models.generate_content(
+        model=model,
+        contents=[
+            types.Part.from_bytes(data=image_bytes, mime_type=media_type),
+            prompt,
+        ],
+    )
     return response.text
 
 

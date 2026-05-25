@@ -39,7 +39,7 @@ echo "  Instalando dependencias..."
 "$PIP" install --quiet anthropic "Pillow>=10" "keyring>=25" pillow-heif
 
 # Instalar SDKs opcionales si están disponibles en requirements
-for pkg in google-generativeai openai groq; do
+for pkg in google-genai openai groq; do
     "$PIP" install --quiet "$pkg" 2>/dev/null && true
 done
 
