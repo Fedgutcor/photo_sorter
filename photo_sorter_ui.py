@@ -721,7 +721,7 @@ class PhotoSorterApp:
 
         f = ttk.Frame(dlg, padding=16)
         f.pack(fill=tk.BOTH)
-        ttk.Label(f, text="Anthropic API Key:", style="Dim.TLabel").pack(anchor=tk.W)
+        ttk.Label(f, text=f"{PROVIDERS.get(self._active_provider, {}).get('name', self._active_provider)} API Key:", style="Dim.TLabel").pack(anchor=tk.W)
         entry_var = tk.StringVar(value=self.apikey_var.get())
         entry = ttk.Entry(f, textvariable=entry_var, show="•", width=48)
         entry.pack(fill=tk.X, pady=(4, 4))
@@ -1374,7 +1374,7 @@ class PhotoSorterApp:
         key = self.apikey_var.get().strip()
         if key and HAS_KEYRING:
             try:
-                keyring.set_password(KEYRING_SERVICE, KEYRING_USER, key)
+                keyring.set_password(KEYRING_SERVICE, _keyring_user(self._active_provider), key)
             except Exception:
                 pass
         try:

@@ -41,7 +41,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Extensiones soportadas
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".tiff", ".heic"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif", ".bmp", ".tiff"}
 VIDEO_EXTENSIONS = {".mov", ".mp4", ".avi", ".mkv", ".webm", ".m4v", ".3gp"}
 ALL_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS
 
@@ -178,6 +178,11 @@ def process_files(
     results = []
     rename_counter = RenameCounter()
 
+    # Invertir hash_index para lookup por path
+    path_to_hash: dict[Path, str] = {
+        p: h for h, paths in hash_index.items() for p in paths
+    }
+
     # Rastrear qué hashes ya procesamos (el primero es original, los demás duplicados)
     seen_hashes: dict[str, str] = {}  # hash -> path del original
 
@@ -196,8 +201,8 @@ def process_files(
         }
 
         try:
-            # Calcular hash
-            file_hash = compute_sha256(file_path)
+            # Obtener hash precomputado
+            file_hash = path_to_hash.get(file_path) or compute_sha256(file_path)
 
             # Detectar si es video
             is_video = file_path.suffix.lower() in VIDEO_EXTENSIONS

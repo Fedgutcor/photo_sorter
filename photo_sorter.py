@@ -29,7 +29,7 @@ except ImportError:
 
 try:
     import keyring
-    _KEYRING_SERVICE = "com.ultragresion.photosorter"
+    _KEYRING_SERVICE = "PhotoSorter"
     _KEYRING_ACCOUNT = "anthropic_api_key"
 except ImportError:
     keyring = None
@@ -92,7 +92,7 @@ ALLOWED_CATEGORIES = [
 ]
 
 # Extensiones soportadas (HEIC/HEIF requiere pillow-heif)
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif", ".bmp", ".tiff"}
 
 # Límites de imagen para envío a APIs
 MAX_IMAGE_SIZE      = 20 * 1024 * 1024
@@ -590,18 +590,6 @@ async def analyze_image(
         return _parse_json_response(text, allowed_categories)
 
 
-# Alias para compatibilidad con código existente
-async def analyze_image_with_claude(client, file_path, semaphore, delay=0.0,
-                                    extra_prompt="", model="claude-3-haiku-20240307",
-                                    allowed_categories=None, max_retries=3):
-    api_key = client.api_key if hasattr(client, "api_key") else ""
-    return await analyze_image(
-        api_key=api_key, file_path=file_path, semaphore=semaphore,
-        delay=delay, extra_prompt=extra_prompt, model=model,
-        provider="anthropic", allowed_categories=allowed_categories,
-        max_retries=max_retries,
-    )
-
 
 # ── Estructura de carpetas ─────────────────────────────────────────────────────
 
@@ -660,7 +648,7 @@ def collect_images(input_dir: Path, recursive: bool = False) -> list[Path]:
     for ext in exts:
         images.extend(glob_fn(f"*{ext}"))
         images.extend(glob_fn(f"*{ext.upper()}"))
-    return sorted(set(images))
+    return sorted(f for f in set(images) if not f.name.startswith("._"))
 
 
 # ── Proceso principal ──────────────────────────────────────────────────────────
@@ -953,14 +941,14 @@ Ejemplos:
     cache = CacheDB(cache_path)
     cached_count = sum(1 for img in images if cache.get(compute_sha256(img)))
 
-    estimated_cost = estimate_cost(len(images), cached_count, args.model)
+    estimated_cost = estimate_cost(len(images), cached_count, model)
 
     logger.info("")
     logger.info("=== ESTIMACIÓN ===")
     logger.info(f"Total:     {len(images)}")
     logger.info(f"Caché:     {cached_count}")
     logger.info(f"Procesar:  {len(images) - cached_count}")
-    logger.info(f"Modelo:    {args.model}")
+    logger.info(f"Modelo:    {model}")
     logger.info(f"Costo est: ${estimated_cost:.3f} USD")
     logger.info("")
 
