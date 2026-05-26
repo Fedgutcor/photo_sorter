@@ -9,4 +9,4 @@ dist/
 build/
 .ui_config.json
 *.db
-icon.icns
+icon.ico

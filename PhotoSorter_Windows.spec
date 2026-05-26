@@ -21,21 +21,29 @@ a = Analysis(
         "PIL._tkinter_finder",
         "pillow_heif",
         "pillow_heif._pillow_heif",
-        # Anthropic y dependencias HTTP
+        # Anthropic
         "anthropic",
         "anthropic._models",
         "anthropic._client",
         "anthropic.resources",
         "anthropic.types",
+        # HTTP
         "httpx",
         "httpcore",
         "anyio",
         "anyio._backends._asyncio",
         "sniffio",
-        # email / stdlib usada por httpx
         "email.mime.multipart",
         "email.mime.text",
-        # tkinter extras
+        # Google AI Studio
+        "google.genai",
+        "google.genai.types",
+        "google.auth",
+        # OpenAI
+        "openai",
+        # Groq
+        "groq",
+        # tkinter
         "tkinter",
         "tkinter.ttk",
         "tkinter.filedialog",

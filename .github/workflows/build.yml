@@ -1,0 +1,122 @@
+name: Build — macOS & Windows
+
+on:
+  push:
+    tags:
+      - "v*"          # dispara con: git tag v1.0.0 && git push --tags
+  workflow_dispatch:  # también se puede correr manualmente desde GitHub
+
+jobs:
+  build-macos:
+    name: macOS (.app)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          pip install --upgrade pip
+          pip install anthropic "Pillow>=10" "keyring>=25" pillow-heif \
+                      google-genai openai groq pyinstaller
+
+      - name: Build .app
+        run: pyinstaller PhotoSorter.spec --noconfirm --clean
+
+      - name: Empacar .app en ZIP
+        run: |
+          cd dist
+          zip -r "PhotoSorter_macOS_${{ github.ref_name }}.zip" "Photo Sorter.app"
+
+      - name: Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhotoSorter-macOS
+          path: dist/PhotoSorter_macOS_*.zip
+
+  build-windows:
+    name: Windows (.exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          pip install --upgrade pip
+          pip install anthropic Pillow keyring pillow-heif `
+                      google-genai openai groq pyinstaller
+
+      - name: Convertir ícono a .ico
+        shell: pwsh
+        run: |
+          pip install Pillow --quiet
+          python -c "
+          from PIL import Image
+          img = Image.open('icon.icns')
+          sizes = [(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)]
+          img.save('icon.ico', format='ICO', sizes=sizes)
+          print('icon.ico generado')
+          "
+
+      - name: Build .exe
+        run: pyinstaller PhotoSorter_Windows.spec --noconfirm --clean
+
+      - name: Renombrar .exe con versión
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}"
+          Copy-Item "dist\PhotoSorter.exe" "dist\PhotoSorter_Windows_$version.exe"
+
+      - name: Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: PhotoSorter-Windows
+          path: dist/PhotoSorter_Windows_*.exe
+
+  release:
+    name: Crear Release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Descargar artefactos
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Crear GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Photo Sorter ${{ github.ref_name }}"
+          body: |
+            ## Photo Sorter ${{ github.ref_name }}
+
+            Organiza tus fotos con IA — Claude, Gemini, GPT-4o, Llama Vision.
+
+            ### Descarga
+            | Sistema | Archivo |
+            |---------|---------|
+            | macOS | `PhotoSorter_macOS_${{ github.ref_name }}.zip` — descomprime y doble clic |
+            | Windows | `PhotoSorter_Windows_${{ github.ref_name }}.exe` — doble clic directo |
+
+            ### Instalación sin ejecutable
+            ```bash
+            # macOS / Linux
+            bash install_and_run.sh
+
+            # Windows
+            install_and_run.bat
+            ```
+          files: |
+            artifacts/PhotoSorter-macOS/*.zip
+            artifacts/PhotoSorter-Windows/*.exe
+          draft: false
+          prerelease: false
